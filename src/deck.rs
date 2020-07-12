@@ -37,6 +37,10 @@ impl Deck {
         self.cards.pop_back()
     }
 
+    pub fn draw_nth(&mut self, n: usize) -> Option<Card> {
+        self.cards.remove(n)
+    }
+
     pub fn len(&self) -> usize {
         self.cards.len()
     }
@@ -81,6 +85,30 @@ mod tests {
         assert_eq!(d.len(), 51);
         assert_eq!(*c.suit(), Suit::Spades);
         assert_eq!(*c.rank(), Rank::King);
+    }
 
+    #[test]
+    fn draw_nth() {
+        let mut d = Deck::new();
+
+        let c = d.draw_nth(10).unwrap();
+        assert_eq!(d.len(), 51);
+        assert_eq!(*c.suit(), Suit::Clubs);
+        assert_eq!(*c.rank(), Rank::Jack);
+
+        let c = d.draw_nth(20).unwrap();
+        assert_eq!(d.len(), 50);
+        assert_eq!(*c.suit(), Suit::Diamonds);
+        assert_eq!(*c.rank(), Rank::Nine);     // Its Rank::Nine because we already drew a card beforehand
+
+        let c = d.draw_nth(40).unwrap();
+        assert_eq!(d.len(), 49);
+        assert_eq!(*c.suit(), Suit::Spades);
+        assert_eq!(*c.rank(), Rank::Four);
+
+        // draw a non-existent card
+        let c = d.draw_nth(50);
+        assert_eq!(d.len(), 49);
+        assert_eq!(c, None);
     }
 }
