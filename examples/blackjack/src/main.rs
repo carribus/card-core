@@ -318,7 +318,7 @@ fn run_table_games() {
                 "Box {} wins with {} against {} (blackjack = {})", 
                 i, 
                 table.box_total(i).get_best_total(), 
-                able.dealer_total().get_best_total(), 
+                table.dealer_total().get_best_total(), 
                 is_bj
             ),
             HandResult::DealerWins(is_bj) => println!(
