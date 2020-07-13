@@ -1,4 +1,4 @@
-use std::cmp;
+use std::cmp::{min, max, Ordering};
 use std::ops::AddAssign;
 use rand::prelude::*;
 use card_core::*;
@@ -30,9 +30,9 @@ impl AddAssign for HandTotal {
 impl HandTotal {
     pub fn get_best_total(&self) -> u8 {
         if self.hard_total > 21 {
-            return cmp::min(self.hard_total, self.soft_total)
+            return min(self.hard_total, self.soft_total)
         }
-        return cmp::max(self.hard_total, self.soft_total)        
+        max(self.hard_total, self.soft_total)
     }
 }
 
@@ -81,12 +81,17 @@ impl BlackjackEvaluator {
             return HandResult::DealerWins(false)
         }
 
-        if player_total > dealer_total {
-            return HandResult::PlayerWins(false);
-        } else if player_total < dealer_total {
-            return HandResult::DealerWins(false)
-        } 
-        HandResult::Push
+        match player_total.cmp(&dealer_total) {
+            Ordering::Greater => HandResult::PlayerWins(false),
+            Ordering::Less => HandResult::DealerWins(false),
+            Ordering::Equal => HandResult::Push,
+        }
+        // if player_total > dealer_total {
+        //     return HandResult::PlayerWins(false);
+        // } else if player_total < dealer_total {
+        //     return HandResult::DealerWins(false)
+        // } 
+        // HandResult::Push
     }
 
     fn get_card_value(card: &Card) -> HandTotal {
@@ -147,6 +152,17 @@ pub struct BlackjackTable {
     deck: Deck,
     boxes: Vec<BlackjackBox>,
     dealer: Vec<Card>
+}
+
+impl Default for BlackjackTable {
+    fn default() -> Self {
+        Self {
+            config: BlackjackTableConfig::default(),
+            deck: Deck::default(),
+            boxes: Vec::new(),
+            dealer: Vec::new(),
+        }
+    }
 }
 
 impl BlackjackTable {
@@ -211,7 +227,7 @@ impl BlackjackTable {
     }
 
     fn draw_card(&mut self) -> Option<Card> {
-        let index = rand::random::<usize>() & self.deck.len()-1;
+        let index = random::<usize>() & (self.deck.len()-1);
         // println!("deck length: {}, index = {}", self.deck.len(), index);
 
         self.deck.draw_nth(index)
@@ -321,7 +337,7 @@ fn run_table_games() {
                 table.dealer_total().get_best_total(), 
                 is_bj
             ),
-            HandResult::DealerWins(is_bj) => println!(
+            HandResult::DealerWins(_is_bj) => println!(
                 "Box {} loses with {} against {}", 
                 i, 
                 table.box_total(i).get_best_total(), 
@@ -351,7 +367,7 @@ fn main() {
     println!("\n***********\n");
 
     // actual table based gameplay
-    for i in 0..10 {
+    for _ in 0..10 {
         run_table_games();
     }
 }
