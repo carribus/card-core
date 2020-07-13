@@ -1,5 +1,6 @@
 use std::cmp;
 use std::ops::AddAssign;
+use rand::prelude::*;
 use card_core::*;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -97,13 +98,114 @@ impl BlackjackEvaluator {
     }
 }
 
-fn main() {
+#[derive(Debug, Copy, Clone)]
+struct BlackjackTableConfig {
+    num_boxes: usize,
+    max_splits_per_box: usize,
+    split_aces: bool,
+    decks_per_shoe: usize,
+    blackjack_payout_factor: f32,
+}
+
+impl Default for BlackjackTableConfig {
+    fn default() -> Self {
+        Self {
+            num_boxes: 2,
+            max_splits_per_box: 4,
+            split_aces: true,
+            decks_per_shoe: 6,
+            blackjack_payout_factor: 1.5,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+struct BlackjackBox {
+    child_box: Vec<Option<BlackjackBox>>,
+    cards: Vec<Card>,
+}
+
+impl Default for BlackjackBox {
+    fn default() -> Self {
+        Self {
+            child_box: Vec::new(),
+            cards: Vec::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct BlackjackTable {
+    config: BlackjackTableConfig,
+    deck: Deck,
+    boxes: Vec<BlackjackBox>,
+    dealer: Vec<Card>
+}
+
+impl BlackjackTable {
+    pub fn new() -> Self {
+        let config = BlackjackTableConfig::default();
+        let mut deck = Deck::new_empty();
+        let mut boxes = Vec::new();
+
+        for _ in 0..config.decks_per_shoe {
+            let mut d = Deck::new();
+            deck.add_deck(&mut d);
+        }
+
+        for _ in 0..config.num_boxes {
+            boxes.push(BlackjackBox::default());
+        }
+
+        Self {
+            config,
+            deck,
+            boxes,
+            dealer: Vec::new(),
+        }
+    }
+
+    pub fn deal_cards(&mut self) {
+        let num_boxes = self.boxes.len()+1; // dealer's box counts as one of the boxes
+
+        // deal 2 cards to each box and 1 card to dealer
+        for i in 0..(num_boxes*2-1) {
+            let card = self.draw_card().unwrap();
+            let box_num = i % num_boxes;
+
+            if box_num < num_boxes-1 {
+                self.boxes[box_num].cards.push(card);
+            } else {
+                self.dealer.push(card)
+            }
+        }
+    }
+
+    pub fn num_boxes(&self) -> usize {
+        self.config.num_boxes
+    }
+
+    pub fn box_total(&self, index: usize) -> HandTotal {
+        BlackjackEvaluator::hand_value(&self.boxes[index].cards)
+    }
+
+    pub fn draw_card_for_box(&mut self, index: usize) {
+        let card = self.draw_card().unwrap();
+        self.boxes[index].cards.push(card);
+    }
+
+    fn draw_card(&mut self) -> Option<Card> {
+        let index = rand::random::<usize>() & self.deck.len()-1;
+        println!("deck length: {}, index = {}", self.deck.len(), index);
+
+        self.deck.draw_nth(index)
+    }
+}
+
+fn generate_and_deplete_deck() {
     let mut deck = Deck::new();
     let mut discard = Deck::new_empty();
 
-    // first we just generate a deck and draw from front of the deck until it is depleted.
-    // each drawn card is added to a hand until the hand busts, the cards are then discarded to a discard pile
-    // and the process continues until there are no cards left in the deck
     while deck.len() > 0 {
         let mut hand = Vec::new();
 
@@ -127,9 +229,9 @@ fn main() {
         }
         println!("Discard pile has {} card", discard.len());
     }
+}
 
-    println!("\n***********\n");
-
+fn evaluate_some_hands() {
     fn print_hand_result(hand: &[Card], dealer: &[Card]) {
         let now = std::time::SystemTime::now();
         match BlackjackEvaluator::compare_hands(&hand, &dealer) {
@@ -169,4 +271,33 @@ fn main() {
     let hand = vec![Card::from_suit_and_rank(Suit::Clubs, Rank::Ace), Card::from_suit_and_rank(Suit::Hearts, Rank::King)];
     let dealer = vec![Card::from_suit_and_rank(Suit::Diamonds, Rank::Nine), Card::from_suit_and_rank(Suit::Hearts, Rank::Seven), Card::from_suit_and_rank(Suit::Spades, Rank::Five)];
     print_hand_result(&hand, &dealer);
+}
+
+fn run_table_games() {
+    let mut table = BlackjackTable::new();
+
+    table.deal_cards();
+    for i in 0..table.num_boxes() {
+        while table.box_total(i).get_best_total() < 17 {
+            table.draw_card_for_box(i);
+        }
+
+        println!("box {}, total {:?}:\n\t{:?}", i, table.box_total(i), table.boxes[i]);
+    }
+
+}
+
+fn main() {
+    // first we just generate a deck and draw from front of the deck until it is depleted.
+    // each drawn card is added to a hand until the hand busts, the cards are then discarded to a discard pile
+    // and the process continues until there are no cards left in the deck
+    generate_and_deplete_deck();
+    println!("\n***********\n");
+
+    // test some hand evaluations
+    evaluate_some_hands();
+    println!("\n***********\n");
+
+    // actual table based gameplay
+    run_table_games();
 }

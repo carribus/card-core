@@ -1,6 +1,6 @@
 [package]
 name = "card-core"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Peter Mares <carribus@gmail.com>"]
 edition = "2018"
 
