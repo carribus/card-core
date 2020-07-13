@@ -7,6 +7,18 @@ pub enum Suit {
     None,
 }
 
+impl std::fmt::Display for Suit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            Suit::Clubs => "c",
+            Suit::Diamonds => "d",
+            Suit::Hearts => "h",
+            Suit::Spades => "s",
+            Suit::None => "-",
+        })
+    }
+}
+
 impl Suit {
     /// Convert a Suit variant to its ordinal value
     pub fn to_ordinal(&self) -> u8 {
@@ -47,6 +59,20 @@ pub enum Rank {
     Queen,
     King,
     Joker,
+}
+
+impl std::fmt::Display for Rank {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Rank::Ace => write!(f, "A"),
+            Rank::Ten => write!(f, "T"),
+            Rank::Jack => write!(f, "J"),
+            Rank::Queen => write!(f, "Q"),
+            Rank::King => write!(f, "K"),
+            Rank::Joker => write!(f, "JOKER"),
+            _ => write!(f, "{}", self.to_ordinal()),
+        }
+    }
 }
 
 impl Rank {
@@ -103,6 +129,12 @@ impl Default for Card {
             suit: Suit::Clubs,
             rank: Rank::Ace,
         }
+    }
+}
+
+impl std::fmt::Display for Card {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}{}", self.rank, self.suit)
     }
 }
 

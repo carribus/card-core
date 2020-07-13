@@ -101,6 +101,9 @@ fn main() {
     let mut deck = Deck::new();
     let mut discard = Deck::new_empty();
 
+    // first we just generate a deck and draw from front of the deck until it is depleted.
+    // each drawn card is added to a hand until the hand busts, the cards are then discarded to a discard pile
+    // and the process continues until there are no cards left in the deck
     while deck.len() > 0 {
         let mut hand = Vec::new();
 
@@ -128,6 +131,7 @@ fn main() {
     println!("\n***********\n");
 
     fn print_hand_result(hand: &[Card], dealer: &[Card]) {
+        let now = std::time::SystemTime::now();
         match BlackjackEvaluator::compare_hands(&hand, &dealer) {
             HandResult::DealerWins(is_blackjack) => println!(
                 "Dealer wins {} v {} (blackjack = {})", 
@@ -147,6 +151,7 @@ fn main() {
                 BlackjackEvaluator::hand_value(&hand).get_best_total()
             ),
         }
+        println!("\t:: hand_result took {}ns", now.elapsed().unwrap().as_nanos());
     }
 
     let hand = vec![Card::from_suit_and_rank(Suit::Clubs, Rank::Ace), Card::from_suit_and_rank(Suit::Hearts, Rank::Seven)];
