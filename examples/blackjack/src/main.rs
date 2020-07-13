@@ -74,9 +74,16 @@ impl BlackjackEvaluator {
         }
 
         // normal hand eval
-        if player_total.get_best_total() > dealer_total.get_best_total() {
+        let player_total = player_total.get_best_total();
+        let dealer_total = dealer_total.get_best_total();
+
+        if player_total > 21 {
+            return HandResult::DealerWins(false)
+        }
+
+        if player_total > dealer_total {
             return HandResult::PlayerWins(false);
-        } else if player_total.get_best_total() < dealer_total.get_best_total() {
+        } else if player_total < dealer_total {
             return HandResult::DealerWins(false)
         } 
         HandResult::Push
@@ -110,7 +117,7 @@ struct BlackjackTableConfig {
 impl Default for BlackjackTableConfig {
     fn default() -> Self {
         Self {
-            num_boxes: 2,
+            num_boxes: 5,
             max_splits_per_box: 4,
             split_aces: true,
             decks_per_shoe: 6,
@@ -189,14 +196,23 @@ impl BlackjackTable {
         BlackjackEvaluator::hand_value(&self.boxes[index].cards)
     }
 
+    pub fn dealer_total(&self) -> HandTotal {
+        BlackjackEvaluator::hand_value(&self.dealer)
+    }
+
     pub fn draw_card_for_box(&mut self, index: usize) {
         let card = self.draw_card().unwrap();
         self.boxes[index].cards.push(card);
     }
 
+    pub fn draw_card_for_dealer(&mut self) {
+        let card = self.draw_card().unwrap();
+        self.dealer.push(card);
+    }
+
     fn draw_card(&mut self) -> Option<Card> {
         let index = rand::random::<usize>() & self.deck.len()-1;
-        println!("deck length: {}, index = {}", self.deck.len(), index);
+        // println!("deck length: {}, index = {}", self.deck.len(), index);
 
         self.deck.draw_nth(index)
     }
@@ -274,9 +290,13 @@ fn evaluate_some_hands() {
 }
 
 fn run_table_games() {
+    let now = std::time::SystemTime::now();
     let mut table = BlackjackTable::new();
 
+    println!("Dealing hands...");
     table.deal_cards();
+
+    println!("\nPlayers drawing while below 17");
     for i in 0..table.num_boxes() {
         while table.box_total(i).get_best_total() < 17 {
             table.draw_card_for_box(i);
@@ -285,6 +305,38 @@ fn run_table_games() {
         println!("box {}, total {:?}:\n\t{:?}", i, table.box_total(i), table.boxes[i]);
     }
 
+    println!("\nDealer drawing while below 17");
+    while table.dealer_total().hard_total < 17 {
+        table.draw_card_for_dealer();
+    }
+    println!("dealer total {:?}:\n\t{:?}", table.dealer_total(), table.dealer);
+
+    println!("\nEvaluating hands");
+    for i in 0..table.num_boxes() {
+        match BlackjackEvaluator::compare_hands(&table.boxes[i].cards, &table.dealer) {
+            HandResult::PlayerWins(is_bj) => println!(
+                "Box {} wins with {} against {} (blackjack = {})", 
+                i, 
+                table.box_total(i).get_best_total(), 
+                able.dealer_total().get_best_total(), 
+                is_bj
+            ),
+            HandResult::DealerWins(is_bj) => println!(
+                "Box {} loses with {} against {}", 
+                i, 
+                table.box_total(i).get_best_total(), 
+                table.dealer_total().get_best_total()
+            ),
+            HandResult::Push => println!(
+                "Box {} pushes with dealer ({} vs {})", 
+                i, 
+                table.box_total(i).get_best_total(), 
+                table.dealer_total().get_best_total()
+            ),
+        }
+    }
+    
+    println!("\nHand took {}µs to execute and evaluate", now.elapsed().unwrap().as_micros());
 }
 
 fn main() {
@@ -299,5 +351,7 @@ fn main() {
     println!("\n***********\n");
 
     // actual table based gameplay
-    run_table_games();
+    for i in 0..10 {
+        run_table_games();
+    }
 }
