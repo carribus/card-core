@@ -41,6 +41,10 @@ impl Deck {
         self.cards.remove(n)
     }
 
+    pub fn add(&mut self, card: Card) {
+        self.cards.push_back(card);
+    }
+
     pub fn len(&self) -> usize {
         self.cards.len()
     }

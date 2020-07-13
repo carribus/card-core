@@ -1,9 +1,11 @@
 [package]
-name = "card-core"
-version = "0.1.1"
+name = "blackjack"
+version = "0.1.0"
 authors = ["Peter Mares <carribus@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+#card-core = { git = "https://github.com/carribus/card-core" }
+card-core = { path = "../../../card-core" }
