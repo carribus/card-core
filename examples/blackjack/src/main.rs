@@ -3,6 +3,11 @@ use std::ops::AddAssign;
 use rand::prelude::*;
 use card_core::*;
 
+/// This struct is used to express the value of a particular hand in Blackjack.
+/// Since Blackjack hands may contain Ace cards which can be values as 1 (soft value) or 11 (hard value), the HandTotal
+/// expressed both soft and hard totals.
+///
+/// To get the best valid hand total, call the ```HandTotal.get_best_total()``` method.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct HandTotal {
     pub hard_total: u8,
@@ -28,6 +33,7 @@ impl AddAssign for HandTotal {
 }
 
 impl HandTotal {
+    /// Calculates the best total of the hand
     pub fn get_best_total(&self) -> u8 {
         if self.hard_total > 21 {
             return min(self.hard_total, self.soft_total)
@@ -36,15 +42,18 @@ impl HandTotal {
     }
 }
 
+/// The ```HandResult``` enum describes the result of comparing a player's hand against the dealer's hand
 pub enum HandResult {
     DealerWins(bool),
     PlayerWins(bool),
     Push,
 }
 
+/// Use this to evaluate hand values, compare hands to determine winners and retrieve values of specific cards
 pub struct BlackjackEvaluator;
 
 impl BlackjackEvaluator {
+    /// This method is used to calculate the soft and hard totals of a specific hand of cards
     pub fn hand_value(hand: &[Card]) -> HandTotal {
         let mut result = HandTotal::default();
 
@@ -56,6 +65,8 @@ impl BlackjackEvaluator {
         result
     }
 
+    /// Use this method to compare two hands of cards and determine the winning hand
+    /// This is usually used to compare a 'player' hand against a 'dealer' hand, but you can compare any two hands you wish
     pub fn compare_hands(player: &[Card], dealer: &[Card]) -> HandResult {
         let player_total = Self::hand_value(player);
         let dealer_total = Self::hand_value(dealer);
@@ -88,6 +99,9 @@ impl BlackjackEvaluator {
         }
     }
 
+    /// Returns the value of a card as a HandTotal struct.
+    ///
+    /// Will panic if a Joker card is passed in
     fn get_card_value(card: &Card) -> HandTotal {
         match card.rank() {
             Rank::Ace => HandTotal { hard_total: 11, soft_total: 1 },
@@ -104,8 +118,10 @@ impl BlackjackEvaluator {
     }
 }
 
+/// Describes the game configuration of a specific Blackjack table.
+/// This struct is passed into the ```BlackjackTable.new```
 #[derive(Debug, Copy, Clone)]
-struct BlackjackTableConfig {
+pub struct BlackjackTableConfig {
     num_boxes: usize,
     max_splits_per_box: usize,
     split_aces: bool,
@@ -125,6 +141,8 @@ impl Default for BlackjackTableConfig {
     }
 }
 
+/// Represents a single box on the blackjack table.
+/// A box contains a ```Vec``` of cards, and can contain child boxes in the case of advanced gameplay mechanics such as splits
 #[derive(Debug, Clone)]
 struct BlackjackBox {
     child_box: Vec<Option<BlackjackBox>>,
@@ -140,6 +158,8 @@ impl Default for BlackjackBox {
     }
 }
 
+/// This struct represents a complete blackjack table with configuration
+/// It exposes an API that allows a game of blackjack to be executed and evaluated completely
 #[derive(Debug, Clone)]
 pub struct BlackjackTable {
     config: BlackjackTableConfig,
@@ -162,6 +182,10 @@ impl Default for BlackjackTable {
 impl BlackjackTable {
     pub fn new() -> Self {
         let config = BlackjackTableConfig::default();
+        Self::from_config(config)
+    }
+
+    pub fn from_config(config: BlackjackTableConfig) -> Self {
         let mut deck = Deck::new_empty();
         let mut boxes = Vec::new();
 

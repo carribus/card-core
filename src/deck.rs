@@ -1,6 +1,11 @@
 use std::collections::VecDeque;
 use crate::cards::Card;
 
+/// A deck is a collection of 52 cards (Aces through to Kings) of each of the four suits (Clubs, Diamonds, Heart and Spades).
+/// Decks can have cards added to- and removed from them.
+///
+/// To remove cards from the deck, call either the ```.draw()``` or ```.draw_nth()``` methods. ```draw()``` will remove a card
+/// from the end of the deck while ```draw_nth()``` allows the caller to remove a card from any valid position within the deck.
 #[derive(Debug, Clone)]
 pub struct Deck {
     cards: VecDeque<Card>,
@@ -23,32 +28,39 @@ impl Default for Deck {
 }
 
 impl Deck {
+    /// Create a standard deck of 52 cards
     pub fn new() -> Self {
         Deck::default()
     }
 
+    /// Create an empty deck of cards
     pub fn new_empty() -> Self {
         Deck {
             cards: VecDeque::with_capacity(52),
         }
     }
 
+    /// Draw the card at the end of the deck
     pub fn draw(&mut self) -> Option<Card> {
         self.cards.pop_back()
     }
 
+    /// Draw a card from the nth position
     pub fn draw_nth(&mut self, n: usize) -> Option<Card> {
         self.cards.remove(n)
     }
 
+    /// Add a card to the deck
     pub fn add(&mut self, card: Card) {
         self.cards.push_back(card);
     }
 
+    /// Add an entire deck to this deck
     pub fn add_deck(&mut self, deck: &mut Self) {
         self.cards.append(&mut deck.cards)
     }
 
+    /// Get the number of cards in this deck
     pub fn len(&self) -> usize {
         self.cards.len()
     }

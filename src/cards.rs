@@ -1,3 +1,4 @@
+/// Represents the suit of a card and is able to express Clubs, Diamonds, Hearts, Spades or None
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Suit {
     Clubs,
@@ -43,6 +44,7 @@ impl Suit {
     }
 }
 
+/// Represents the rank of a card and can express values from Ace to King (0..12) as well as Joker (13..)
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub enum Rank {
     Ace,
@@ -117,6 +119,7 @@ impl Rank {
     }
 }
 
+/// Represents a playing card. A playing card is made of up a ```Suit``` and ```Rank```.
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Card {
     suit: Suit,
@@ -160,18 +163,22 @@ impl Card {
         }
     }
 
+    /// Set the rank of a card
     pub fn set_rank(&mut self, rank: Rank) {
         self.rank = rank;
     }
 
+    /// Set the suit of a card
     pub fn set_suit(&mut self, suit: Suit) {
         self.suit = suit;
     }
 
+    /// Get the rank of a card
     pub fn rank(&self) -> &Rank {
         &self.rank
     }
 
+    /// Get the suit of a card
     pub fn suit(&self) -> &Suit {
         &self.suit
     }
