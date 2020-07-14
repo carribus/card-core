@@ -86,12 +86,6 @@ impl BlackjackEvaluator {
             Ordering::Less => HandResult::DealerWins(false),
             Ordering::Equal => HandResult::Push,
         }
-        // if player_total > dealer_total {
-        //     return HandResult::PlayerWins(false);
-        // } else if player_total < dealer_total {
-        //     return HandResult::DealerWins(false)
-        // } 
-        // HandResult::Push
     }
 
     fn get_card_value(card: &Card) -> HandTotal {
